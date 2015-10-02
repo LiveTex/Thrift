@@ -80,7 +80,7 @@ uint32_t THttpTransport::readEnd() {
 }
 
 uint32_t THttpTransport::readMoreData() {
-  uint32_t size;
+  uint32_t size = 0;
 
   // Get more data!
   refill();
@@ -90,11 +90,15 @@ uint32_t THttpTransport::readMoreData() {
   }
 
   if (chunked_) {
-    size = readChunked();
+    uint32_t chunkRead = readChunked();
+    while (chunkRead > 0) {
+      size += chunkRead;
+      chunkRead = readChunked();
+    }
   } else {
     size = readContent(contentLength_);
+    readHeaders_ = true;
   }
-  readHeaders_ = true;
   return size;
 }
 
